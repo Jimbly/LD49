@@ -1,7 +1,7 @@
 LD49 - Unstable
 ============================
 
-Ludum Dare 49 Entry by Jimbly - "Untitlted"
+Ludum Dare 49 Entry by Jimbly - "Blood of Beasts"
 
 * Play here: [http://www.dashingstrike.com/LudumDare/LD48/](dashingstrike.com/LudumDare/LD49/)
 * Using [Javascript libGlov/GLOV.js framework](https://github.com/Jimbly/glovjs)
@@ -51,9 +51,7 @@ Resources:
   Mahite
 
 Priority order:
-  Introduction
   End condition (money)
-  Title screen
   Diviner
   More interesting & coherent location / monster generation
 

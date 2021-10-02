@@ -4,6 +4,7 @@ local_storage.setStoragePrefix('glovjs-playground'); // Before requiring anythin
 
 const assert = require('assert');
 const engine = require('glov/client/engine.js');
+const fs = require('fs');
 // const input = require('glov/client/input.js');
 const { ceil, floor, max, min, pow, random } = Math;
 const net = require('glov/client/net.js');
@@ -24,6 +25,11 @@ Z.UI_TEST = 200;
 // Virtual viewport for our game logic
 const game_width = 720;
 const game_height = 400;
+
+let ansi_files = {
+  welcome: fs.readFileSync(`${__dirname}/ans/welcome.ans`, 'binary'),
+  title: fs.readFileSync(`${__dirname}/ans/title.ans`, 'binary'),
+};
 
 const NAMES = {
   red:     'Redrast', // eslint-disable-line key-spacing
@@ -691,7 +697,7 @@ export function main() {
       eda: [null, null, null, null, null],
     };
     adjustMarketPrices();
-    if (engine.DEBUG) {
+    if (engine.DEBUG && false) {
       //game_state.hp = 90;
       game_state.inventory.push({ count: 2, level: 1, color: 'magenta' },
         { count: 1, level: 1, color: 'blue' },
@@ -975,13 +981,40 @@ export function main() {
     terminal.render();
   }
 
+  function intro() {
+    let ret = terminal.menu({
+      pre_sel: ' ',
+      pre_unsel: ' ',
+      x: (80 - 'CONTINUE'.length) / 2,
+      y: 20,
+      items: [
+        'CONTINUE ',
+      ],
+      color_sel: { fg: 15, bg: 1 },
+      color_unsel: { fg: 9, bg: 0 },
+      color_execute: { fg: 15, bg: 0 },
+    });
+
+    terminal.render();
+
+    if (ret !== -1) {
+      gameInit();
+    }
+  }
+  function introInit() {
+    terminal.normal();
+    terminal.clear();
+    terminal.print({ x: 0, y: 0, text: ansi_files.welcome.split('\x1a')[0] });
+    engine.setState(intro);
+  }
+
   const MENU_W = 20;
   const MENU_X = (80 - MENU_W) / 2;
-  const MENU_Y = 5;
+  const MENU_Y = 20;
   function menu(dt) {
     let sel = terminal.menu({
       x: MENU_X,
-      y: 5,
+      y: MENU_Y,
       items: [
         'New Game ',
         // 'Continue Game ', TODO?
@@ -990,12 +1023,12 @@ export function main() {
     });
 
     if (engine.DEBUG) {
-      sel = 0;
+      gameInit();
     }
 
     switch (sel) { // eslint-disable-line default-case
       case 0:
-        gameInit();
+        introInit();
         break;
       case 1:
         terminalSettingsShow();
@@ -1011,13 +1044,15 @@ export function main() {
     terminal.clear();
     terminalSettingsInit(terminal);
 
+    terminal.print({ x: 0, y: 0, text: ansi_files.title.split('\x1a')[0] });
+
     terminal.cells({
       x: MENU_X - 2, y: MENU_Y - 1, ws: [MENU_W], hs: [3], charset: 2,
       header: ' MENU ',
     });
 
     terminal.print({
-      x: 16, y: 20,
+      x: 16, y: 25,
       fg: 8, bg: 0,
       text: 'HINT: Press O at any time to open the options',
     });
