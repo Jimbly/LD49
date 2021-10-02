@@ -35,10 +35,10 @@ const NAMES = {
 };
 const SELL_PRICES = [
   [300, 120], // usually cheaper than COST_HEAL
-  [600, 301],
+  [1200, 100], // Gold colored, should usually be most expensive!
   [900, 110], // usually cheaper than COST_L2 / SELL_L2_MULT (1000)
   [800, 250], // usually cheaper than COST_NEW
-  [1200, 100],
+  [600, 301],
   [100, 1901],
 ];
 const SELL_L2_MULT = 5;
@@ -186,7 +186,7 @@ export function main() {
         }
         addText(' You stand in the town square, ready for adventure!  Or,\r\n perhaps, a break.\r\n');
         this.menu = {
-          '[1] Alchemist\'s Guild ': 'upgrade',
+          '[1] Refiner\'s Guild ': 'upgrade',
           '[2] Market ': 'market',
           '[3] Healer ': 'inn',
           [`[4] Venture Fo${game_state.ventures === 3 ? 'u' : ''}rth `]: 'choice1',
@@ -367,7 +367,7 @@ export function main() {
     choice1: {
       enter: function () {
         if (edaCount() < 2) {
-          addText(ansi.red(' You must visit the Alchemist\'s Guild and install at\r\n' +
+          addText(ansi.red(' You must visit the Refiner\'s Guild and install at\r\n' +
             ' least 2 vials into your E.D.A. before continuing.\r\n\n'));
           return void gameState('town');
         }

@@ -27,6 +27,7 @@ Battle ensues (offscreen?  need something simple to feel engaging?)
 Choice #2 - Distillation
   Beast is slain, if any of its essence types do not fit, empty current vials until all is consumed; Also, need to be able to empty vials anyway, if they are unstable!
     Stretch: different levels of each essence, can choose to dilute by combining higher and lower level to lower
+  Add Undo / reset to start of phase here, easy to make mistakes!  Or, just make it harder to make mistakes / more clear.
 
 Expiration counts down on vials, possibly exploding and causing great damage
 
@@ -48,3 +49,14 @@ Resources:
   Cystil - upgrade
   Blazinul
   Mahite
+
+Priority order:
+  Market
+  Introduction
+  End condition (money)
+  Title screen
+  Diviner
+  More interesting & coherent location / monster generation
+
+  Change more (all after any menu?) things to be new/fresh screens, e.g. intro text from refiner's guild should show text, and have a "continue" stop.
+  Save state to local storage
