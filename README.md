@@ -40,3 +40,11 @@ Choice #3 - Rest & Upgrade
 Goal / end?
   Simplest: monetary goal
   Stretch: acquire 1 of each L5 crystal or something - something that pushes you to deal with the instability
+
+Resources:
+  Relgast - heal
+  Yendar
+  Groalac - upgrade L2
+  Cystil - upgrade
+  Blazinul
+  Mahite

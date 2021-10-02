@@ -126,7 +126,7 @@ class GlovTerminal {
       vec4(42/64,0/64,42/63,1),
       vec4(42/64,21/64,0/63,1),
       vec4(42/64,42/64,42/63,1),
-      vec4(21/64,21/64,21/63,1),
+      vec4(18/64,18/64,18/63,1),
       vec4(21/64,21/64,63/63,1),
       vec4(21/64,63/64,21/63,1),
       vec4(21/64,63/64,63/63,1),
@@ -198,14 +198,25 @@ class GlovTerminal {
         }
         break;
       case MOD_CLEAR:
-        assert(!mod.sub_view); // Not yet implemented
-        for (let ii = 0; ii < this.h; ++ii) {
-          let line = buffer[ii];
-          for (let jj = 0; jj < this.w; ++jj) {
-            line[jj].attr = mod.attr;
-            line[jj].fg = mod.fg;
-            line[jj].bg = mod.bg;
-            line[jj].ch = ' ';
+        if (mod.sub_view) {
+          for (let ii = mod.sub_view.y; ii < mod.sub_view.y + mod.sub_view.h; ++ii) {
+            let line = buffer[ii];
+            for (let jj = mod.sub_view.x; jj < mod.sub_view.x + mod.sub_view.w; ++jj) {
+              line[jj].attr = mod.attr;
+              line[jj].fg = mod.fg;
+              line[jj].bg = mod.bg;
+              line[jj].ch = ' ';
+            }
+          }
+        } else {
+          for (let ii = 0; ii < this.h; ++ii) {
+            let line = buffer[ii];
+            for (let jj = 0; jj < this.w; ++jj) {
+              line[jj].attr = mod.attr;
+              line[jj].fg = mod.fg;
+              line[jj].bg = mod.bg;
+              line[jj].ch = ' ';
+            }
           }
         }
         if (mod_playback) {
@@ -486,10 +497,12 @@ class GlovTerminal {
     let w = params.w || this.w;
     let h = params.h || this.h;
     this.color(params.fg, params.bg);
-    let x0 = clamp(x, 0, this.w);
-    let x1 = clamp(x + w, 0, this.w);
-    let y0 = clamp(y, 0, this.h);
-    let y1 = clamp(y + h, 0, this.h);
+    let eff_w = this.sub_view ? this.sub_view.w : this.w;
+    let eff_h = this.sub_view ? this.sub_view.h : this.h;
+    let x0 = clamp(x, 0, eff_w);
+    let x1 = clamp(x + w, 0, eff_w);
+    let y0 = clamp(y, 0, eff_h);
+    let y1 = clamp(y + h, 0, eff_h);
     let ch = toch(params.ch || ' ');
     for (let ii = y0; ii < y1; ++ii) {
       this.moveto(x0, ii);
@@ -866,6 +879,9 @@ export const ansi = { bg: {} };
     return `${ESC}[${40 + idx}m${str}${ESC}[0m`;
   };
 });
+ansi.normal = function (str) {
+  return `${ESC}[0m${str}`;
+};
 ansi.blink = function (str) {
   return `${ESC}[5m${str}${ESC}[0m`;
 };
