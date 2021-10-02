@@ -5,13 +5,13 @@ local_storage.setStoragePrefix('glovjs-playground'); // Before requiring anythin
 const assert = require('assert');
 const engine = require('glov/client/engine.js');
 // const input = require('glov/client/input.js');
-const { ceil, floor, max, min, random } = Math;
+const { ceil, floor, max, min, pow, random } = Math;
 const net = require('glov/client/net.js');
 const { mashString, randCreate } = require('glov/common/rand_alea.js');
-const { ansi, padRight, terminalCreate } = require('glov/client/terminal.js');
+const { ansi, padLeft, padRight, terminalCreate } = require('glov/client/terminal.js');
 const { terminalSettingsInit, terminalSettingsShow } = require('glov/client/terminal_settings.js');
 const ui = require('glov/client/ui.js');
-const { plural } = require('glov/common/util.js');
+const { clone, plural } = require('glov/common/util.js');
 
 
 window.Z = window.Z || {};
@@ -164,6 +164,7 @@ export function main() {
   let home_idx;
   let home_did_age = false;
   let upgrade_did_something = false;
+  let inventory_draw_once = false;
   function adjustMarketPrices() {
     game_state.market_prices = [];
     for (let ii = 0; ii < 6; ++ii) {
@@ -194,12 +195,55 @@ export function main() {
       },
     },
     market: {
+      menu: {
+        '[1] "Yup!"  Sell crystals. ': 'market_sell',
+        '[2] "Nope."  Back to town. ': 'town',
+      },
       enter: function () {
         // TODO:
-        // Show prices even if we can't sell anything.  There's 2 things here, so,
+        // Show prices even if we can't sell anything.  There's 12 things here, so,
         //   big grid and then just inventory select (ideally actually in inventory menu)
-        addText('Not yet implemented.\r\n\r\n');
-        gameState('town');
+        addText(' You enter a bustling exchange, full or merchants wanting\r\n' +
+          ' to buy crystalized essence.\r\n');
+        let header = [];
+        let cost1 = [];
+        let cost2 = [];
+        let column_w = 8;
+        for (let ii = 0; ii < COLOR_LIST.length; ++ii) {
+          let color = COLOR_LIST[ii];
+          header.push(ansi[color].bright(padRight(NAMES[color], column_w)));
+          cost1.push(padLeft(game_state.market_prices[ii] + 'Φ ', column_w));
+          cost2.push(padLeft(game_state.market_prices[ii] * SELL_L2_MULT + 'Φ ', column_w));
+        }
+        addText('      ' + header.join('') + '\r\n');
+        addText('   L1 ' + ansi.yellow.bright(cost1.join('')) + '\r\n');
+        addText('   L2 ' + ansi.yellow.bright(cost2.join('')) + '\r\n');
+        addText(' A merchant approaches you, ' + talk('"Have something to sell?\r\n' +
+          '   I pay the market rate, just like everyone else."') + '\r\n\r\n');
+      },
+    },
+    market_sell: {
+      inventory_menu: function (idx) {
+        if (idx === game_state.inventory.length) {
+          addText('\n');
+          return void gameState('market');
+        }
+        let item = clone(game_state.inventory[idx]);
+        item.count = 1;
+        inventoryRemove(item);
+        let income = game_state.market_prices[COLOR_LIST.indexOf(item.color)] * pow(SELL_L2_MULT, item.level - 1);
+        game_state.gp += income;
+        addText(` You sell 1 ${itemBright(item)} for ${ansi.yellow.bright(income + 'Φ')}.\r\n`);
+        inventory_draw_once = true;
+      },
+      enter: function () {
+        if (!game_state.inventory.length) {
+          addText(' She looks you up and down, saying ' + talk('"You seem to have\r\n' +
+            '   nothing I\'m interested in."\r\n') +
+          ansi.red(' Come back after distilling the essence of beasts\r\n' +
+            '  into crystals.\r\n'));
+          return void gameState('town');
+        }
       },
     },
     inn: {
@@ -342,7 +386,7 @@ export function main() {
             game_state.gp -= COST_L2;
           }
           game_state.eda[slot].max_level = 2;
-          addText(ansi.green.bright(' Vial upgraded!\r\n'));
+          addText(ansi.green.bright(` Vial ${slot+1} upgraded!\r\n\n`));
           upgrade_did_something = true;
           gameState('upgrade');
         }
@@ -649,7 +693,9 @@ export function main() {
     adjustMarketPrices();
     if (engine.DEBUG) {
       //game_state.hp = 90;
-      //game_state.inventory.push({ count: 1, level: 1, color: 'red' });
+      game_state.inventory.push({ count: 2, level: 1, color: 'magenta' },
+        { count: 1, level: 1, color: 'blue' },
+        { count: 1, level: 2, color: 'blue' });
       game_state.eda[0] = {
         max_level: 1,
       };
@@ -785,21 +831,32 @@ export function main() {
         fg: 6,
         text: 'Inventory:',
       });
-      for (let ii = 0; ii < game_state.inventory.length; ++ii) {
-        let item = game_state.inventory[ii];
+      let st = STATES[game_state.state];
+      if (!st || !st.inventory_menu || inventory_draw_once) {
+        inventory_draw_once = false;
+        for (let ii = 0; ii < game_state.inventory.length; ++ii) {
+          let item = game_state.inventory[ii];
+          terminal.print({
+            x: STATUS_X + 1,
+            y: y++,
+            fg: 7,
+            text: padRight(` ${item.count} ${itemBright(item)}`, STATUS_W - 2),
+          });
+        }
+        // Clear two extra lines
         terminal.print({
-          x: STATUS_X + 2,
+          x: STATUS_X + 1,
           y: y++,
           fg: 7,
-          text: padRight(`${item.count} ${itemBright(item)}`, STATUS_W - 3),
+          text: padRight('', STATUS_W - 2),
+        });
+        terminal.print({
+          x: STATUS_X + 1,
+          y: y++,
+          fg: 7,
+          text: padRight('', STATUS_W - 2),
         });
       }
-      terminal.print({
-        x: STATUS_X + 2,
-        y: y++,
-        fg: 7,
-        text: padRight('', STATUS_W - 3),
-      });
     }
 
     const VOLATILE_X = 42;
@@ -889,6 +946,29 @@ export function main() {
         } else {
           assert(false);
         }
+      }
+    } else if (st && st.inventory_menu) {
+      let inventory_menu = [];
+      for (let ii = 0; ii < game_state.inventory.length; ++ii) {
+        let item = game_state.inventory[ii];
+        inventory_menu.push(`${item.count} ${itemBright(item)}`);
+      }
+      inventory_menu.push('[0] Done');
+
+      let ret = terminal.menu({
+        pre_sel: '[',
+        pre_unsel: ' ',
+        post_sel: ']',
+        post_unsel: ' ',
+        x: 61,
+        y: 5,
+        items: inventory_menu,
+        color_sel: { fg: 15, bg: 1 },
+        color_unsel: { fg: 7, bg: 0 },
+        color_execute: { fg: 15, bg: 0 },
+      });
+      if (ret !== -1) {
+        st.inventory_menu(ret);
       }
     }
 

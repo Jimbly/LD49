@@ -44,14 +44,13 @@ Goal / end?
 
 Resources:
   Relgast - heal
-  Yendar
+  Yendar - valuable
   Groalac - upgrade L2
   Cystil - upgrade
   Blazinul
   Mahite
 
 Priority order:
-  Market
   Introduction
   End condition (money)
   Title screen
@@ -60,3 +59,4 @@ Priority order:
 
   Change more (all after any menu?) things to be new/fresh screens, e.g. intro text from refiner's guild should show text, and have a "continue" stop.
   Save state to local storage
+  Alliterize everything
