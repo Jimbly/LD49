@@ -51,7 +51,12 @@ const ansi_to_vga = [
 
 function toch(ch) {
   if (typeof ch === 'string') {
-    ch = ch.charCodeAt(0);
+    let idx = ch.charCodeAt(0);
+    if (ansi_to_unicode[idx]) {
+      return String.fromCharCode(ansi_to_unicode[idx]);
+    } else {
+      return ch;
+    }
   }
   if (typeof ch === 'number') {
     return String.fromCharCode(ansi_to_unicode[ch] || ch);
@@ -480,6 +485,7 @@ class GlovTerminal {
     let y = params.y || 0;
     let w = params.w || this.w;
     let h = params.h || this.h;
+    this.color(params.fg, params.bg);
     let x0 = clamp(x, 0, this.w);
     let x1 = clamp(x + w, 0, this.w);
     let y0 = clamp(y, 0, this.h);
@@ -860,6 +866,9 @@ export const ansi = { bg: {} };
     return `${ESC}[${40 + idx}m${str}${ESC}[0m`;
   };
 });
+ansi.blink = function (str) {
+  return `${ESC}[5m${str}${ESC}[0m`;
+};
 
 // eslint-disable-next-line no-control-regex
 const strip_ansi = /\u001b\[(?:[0-9;]*)[0-9A-ORZcf-nqry=><]/g;

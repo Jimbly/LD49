@@ -1,36 +1,42 @@
-JavaScript GLOV.js framework
+LD49 - Unstable
 ============================
 
-**Demos**
-* General feature test: [glovjs-playground](http://jimbly.github.io/glovjs/playground/)
-* Terminal module test: [glovjs-terminal](http://jimbly.github.io/glovjs/terminal/)
+Ludum Dare 49 Entry by Jimbly - "Untitlted"
 
-**Projects using this framework**
-* [Worlds FRVR](https://worlds.frvr.com/)
-* [Most of my Ludum Dare entries](http://www.dashingstrike.com/games.html#ld)
-
-**Notes**
-* Files can be ES2020 (through Babel)
-* Server automatically restarts on any relevant file change
-* Client automatically reloads on javascript or html change
-* Client automatically dynamically reloads CSS, texture, etc file changes
-* Client .js and vendor files all bundled and minified
-* Source maps created for debugging, even on minified builds
-* Limited static-fs supported for embedding non-.js files into source, glov/webfs preferred to get dynamic reloads
-* Much functionality derived from libGlov (open source C/C++ games framework)
-
-Useful SublimeText 3 packages
-* SublimeLinter
-* SublimeLinter-eslint (requires `npm i -g eslint`)
+* Play here: [http://www.dashingstrike.com/LudumDare/LD48/](dashingstrike.com/LudumDare/LD49/)
+* Using [Javascript libGlov/GLOV.js framework](https://github.com/Jimbly/glovjs)
 
 Start with: `npm start` (after running `npm i` once)
 
-Build distributable files with: `npm run-script build`
+Brainstorm
 
-Feature demo is index.html (`main.js`), multiplayer demo (requires server) is the built index_multiplayer.html (references `multiplayer.js`)
+Explore Elite Dangerous Ore Refinery mechanic
 
-Notes:
-* The engine API (glov/*) is subject to change occasionally, it often changes with each Ludum Dare in which I use this engine ^_^, though it's been fairly stable for the last couple years.
-* To use MP3 audio files, convert all .wav to .mp3 at the end of development, call engine.startup with `{ sound: { ext_list: ['mp3', 'wav'] } }`
-* Before publishing a project, edit the meta tags in index.html, place a 1200x630px cover image for use on Facebook and Twitter shares.
+You are a hunter of strange magical beasts, distilling their volatile essence into valuable crystals.
+Equipment:
+  Essence Refinery - starts with 3 slots (2 slots?), upgradable to 4 or 5
+  Diviner - 1-N uses, improves the information you get at Choice #1
 
+
+Choice #1 - Kick down a door
+  Where to explore?  Presented with 3 options, and optionally Diviner results
+    Similar options should have a chance of yielding similar prey (80%?)
+
+Battle ensues (offscreen?  need something simple to feel engaging?)
+
+Choice #2 - Distillation
+  Beast is slain, if any of its essence types do not fit, empty current vials until all is consumed; Also, need to be able to empty vials anyway, if they are unstable!
+    Stretch: different levels of each essence, can choose to dilute by combining higher and lower level to lower
+
+Expiration counts down on vials, possibly exploding and causing great damage
+
+Choice #3 - Rest & Upgrade
+  Inn to heal
+  Exports to sell completed crystals
+  Refiner's Guild to upgrade
+  Diviner's Guild to hire for the next trek(s)
+  Venture Fo[u]rth
+
+Goal / end?
+  Simplest: monetary goal
+  Stretch: acquire 1 of each L5 crystal or something - something that pushes you to deal with the instability
