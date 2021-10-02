@@ -113,14 +113,15 @@ export function main() {
   const DISTILL_W = BODY_W + 2;
   const DISTILL_H = 25 - BODY_H - 2;
   const BAR_X0 = 8;
-  const START_GP = 3000;
   const COST_NEW = 1000;
   const COST_NEW_ITEM = { color: 'cyan', count: 1, level: 1 };
   const COST_NEW_MULT = [1, 2, 10, 20, 50, 100];
+  const COST_WIN = 50000;
   const COST_L2 = 5000;
   const COST_L2_ITEM = { color: 'green', count: 1, level: 2 };
   const COST_HEAL = 400;
   const COST_HEAL_ITEM = { color: 'red', count: 1, level: 1 };
+  const START_GP = COST_NEW + COST_NEW * COST_NEW_MULT[1]; // ? + COST_HEAL;
   let body_subview;
   function addText(text) {
     terminal.subViewPush(body_subview);
@@ -167,6 +168,13 @@ export function main() {
   function talk(text) {
     return ansi.yellow(text);
   }
+  function cost(number) {
+    number = String(number);
+    if (number.length > 3) {
+      number = number.slice(0, -3) + ',' + number.slice(-3);
+    }
+    return ansi.yellow.bright(number + 'Φ');
+  }
   let home_idx;
   let home_did_age = false;
   let upgrade_did_something = false;
@@ -197,6 +205,8 @@ export function main() {
           '[2] Market ': 'market',
           '[3] Healer ': 'inn',
           [`[4] Venture Fo${game_state.ventures === 3 ? 'u' : ''}rth `]: 'choice1',
+          [`[5] Buy ticket home for ${cost(COST_WIN)}` +
+            `${game_state.gp >= COST_WIN ? ansi.green.bright(' (win game)') : ''}`]: 'win',
         };
       },
     },
@@ -206,9 +216,6 @@ export function main() {
         '[2] "Nope."  Back to town. ': 'town',
       },
       enter: function () {
-        // TODO:
-        // Show prices even if we can't sell anything.  There's 12 things here, so,
-        //   big grid and then just inventory select (ideally actually in inventory menu)
         addText(' You enter a bustling exchange, full or merchants wanting\r\n' +
           ' to buy crystalized essence.\r\n');
         let header = [];
@@ -218,12 +225,12 @@ export function main() {
         for (let ii = 0; ii < COLOR_LIST.length; ++ii) {
           let color = COLOR_LIST[ii];
           header.push(ansi[color].bright(padRight(NAMES[color], column_w)));
-          cost1.push(padLeft(game_state.market_prices[ii] + 'Φ ', column_w));
-          cost2.push(padLeft(game_state.market_prices[ii] * SELL_L2_MULT + 'Φ ', column_w));
+          cost1.push(padLeft(cost(game_state.market_prices[ii]), column_w - 1));
+          cost2.push(padLeft(cost(game_state.market_prices[ii] * SELL_L2_MULT), column_w - 1));
         }
         addText('      ' + header.join('') + '\r\n');
-        addText('   L1 ' + ansi.yellow.bright(cost1.join('')) + '\r\n');
-        addText('   L2 ' + ansi.yellow.bright(cost2.join('')) + '\r\n');
+        addText('   L1 ' + cost1.join(' ') + '\r\n');
+        addText('   L2 ' + cost2.join(' ') + '\r\n');
         addText(' A merchant approaches you, ' + talk('"Have something to sell?\r\n' +
           '   I pay the market rate, just like everyone else."') + '\r\n\r\n');
       },
@@ -239,7 +246,7 @@ export function main() {
         inventoryRemove(item);
         let income = game_state.market_prices[COLOR_LIST.indexOf(item.color)] * pow(SELL_L2_MULT, item.level - 1);
         game_state.gp += income;
-        addText(` You sell 1 ${itemBright(item)} for ${ansi.yellow.bright(income + 'Φ')}.\r\n`);
+        addText(` You sell 1 ${itemBright(item)} for ${cost(income)}.\r\n`);
         inventory_draw_once = true;
       },
       enter: function () {
@@ -252,12 +259,27 @@ export function main() {
         }
       },
     },
+    win: {
+      enter: function () {
+        if (game_state.gp < COST_WIN) {
+          addText(ansi.red(' You cannot afford this.\r\n\n'));
+          return void gameState('town');
+        }
+        game_state.gp -= COST_WIN;
+        addText(' You pay, the fee, board the airship, and return home.\r\n' +
+          '   The journey is as uneventful and uninteresting as\r\n   this victory screen.\r\n');
+        addText(` You retire "in style" with your remaining ${cost(game_state.gp)}.\r\n\n`);
+
+        addText(ansi.green.bright('                      YOU WIN!\r\n\n'));
+        addText(ansi.blue.bright('                 Thanks for playing!\r\n\n'));
+      },
+    },
     inn: {
       enter: function () {
         addText(' A pale priest presents potent potions for procurement.\r\n');
         if (game_state.hp >= game_state.maxhp) {
           addText(talk('  "You look fine to me, come see me if you\'re injured.\r\n' +
-            `   Our regular rates are ${ansi.yellow.bright(COST_HEAL + 'Φ')} ${talk('or a')} ` +
+            `   Our regular rates are ${cost(COST_HEAL)} ${talk('or a')} ` +
             `${itemDark(COST_HEAL_ITEM)}${talk('.')}\r\n\n`));
           return void gameState('town');
         }
@@ -268,7 +290,7 @@ export function main() {
           addText(talk(' "Oof, that looks like it hurts.  How would you like\r\n  to pay for that?"\r\n'));
         }
         this.menu = {
-          [`[1] Cash. ${ansi.yellow.bright(COST_HEAL + 'Φ')}. `]: 'heal',
+          [`[1] Cash. ${cost(COST_HEAL)}. `]: 'heal',
           [`[2] Crystals. A ${itemBright(COST_HEAL_ITEM)}. `]: 'heal_item',
           '[3] On second thought, maybe later... ': 'town',
         };
@@ -308,10 +330,10 @@ export function main() {
         let mult = COST_NEW_MULT[edaCount()];
         COST_NEW_ITEM.count = mult;
         this.menu = {
-          [`[1] Install L1 Vial for ${ansi.yellow.bright(COST_NEW * mult + 'Φ')} or ${mult === 1 ? 'a' : mult} ` +
+          [`[1] Install L1 Vial for ${cost(COST_NEW * mult)} or ${mult === 1 ? 'a' : mult} ` +
             `${itemBright(COST_NEW_ITEM)} `]:
             'upgradeL1',
-          [`[2] Upgrade L1 \x10 L2 Vial for ${ansi.yellow.bright(COST_L2 + 'Φ')} or a` +
+          [`[2] Upgrade L1 \x10 L2 Vial for ${cost(COST_L2)} or a` +
             ` ${itemBright(COST_L2_ITEM)} `]:
             'upgradeL2',
           [`[3] ${upgrade_did_something ? 'That\'s all for now' : 'Nothing for now'} `]: 'town',
@@ -334,7 +356,7 @@ export function main() {
             addText(ansi.red(' You cannot afford this.\r\n\n'));
             return void gameState('upgrade');
           }
-          addText(` Installing a new L1 Vial for ${ansi.yellow.bright(COST_NEW * mult + 'Φ')}...\r\n`);
+          addText(` Installing a new L1 Vial for ${cost(COST_NEW * mult)}...\r\n`);
         }
         addText(' Please select an empty slot:\r\n');
         this.menu = {
@@ -379,7 +401,7 @@ export function main() {
             addText(ansi.red(' You cannot afford this.\r\n\n'));
             return void gameState('upgrade');
           }
-          addText(` Upgrading L1 \x10 L2 Vial for ${ansi.yellow.bright(COST_L2 + 'Φ')}...\r\n`);
+          addText(` Upgrading L1 \x10 L2 Vial for ${cost(COST_L2)}...\r\n`);
         }
         addText(' Please select a vial to upgrade:\r\n');
         this.menu = {
@@ -481,7 +503,7 @@ export function main() {
           addText(ansi.green.bright(' Lucky!') + '  You escape unscathed.\r\n');
         }
         // let gp = floor(rand.random * 20);
-        // addText(`You find ${ansi.yellow.bright(gp)} GP.\r\n`);
+        // addText(`You find ${cost(gp)} GP.\r\n`);
         // game_state.gp += gp;
         addText('\r\n');
       },
@@ -827,7 +849,7 @@ export function main() {
         x: STATUS_X + 2,
         y: y++,
         fg: 6,
-        text: padRight(`COIN: ${ansi.yellow.bright(`${game_state.gp}Φ`)}  `, STATUS_W - 2),
+        text: padRight(`COIN: ${cost(game_state.gp)}  `, STATUS_W - 2),
       });
       y++;
 

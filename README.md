@@ -51,7 +51,6 @@ Resources:
   Mahite
 
 Priority order:
-  End condition (money)
   Diviner
   More interesting & coherent location / monster generation
 
