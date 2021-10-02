@@ -708,6 +708,10 @@ class GlovTerminal {
         this.menu_idx = ii;
         ret = ii;
       }
+      if ((hotkey && hotkey[1] === '0' || items.length === 1) && input.keyDownEdge(KEYS.ESCAPE)) {
+        this.menu_idx = ii;
+        ret = ii;
+      }
     }
 
     this.menu_idx = (this.menu_idx + items.length) % items.length;

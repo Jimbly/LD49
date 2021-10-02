@@ -47,13 +47,14 @@ Resources:
   Yendar - valuable
   Groalac - upgrade L2
   Cystil - upgrade
-  Blazinul
-  Mahite
+  Blazinul - stable
+  Mahite - unlock L2 essence
 
 Priority order:
-  Diviner
-  More interesting & coherent location / monster generation
+  Filling vials needs to be more satsifying, notify making a crystal as a big deal!
+    First, make menu use the EDA display
 
   Change more (all after any menu?) things to be new/fresh screens, e.g. intro text from refiner's guild should show text, and have a "continue" stop.
   Save state to local storage
   Alliterize everything
+  Some correlation between location, beast, and essence drops
