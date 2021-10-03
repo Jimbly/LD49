@@ -528,9 +528,15 @@ export function main() {
           }
           addText(` Installing a new L1 Vial for ${cost(COST_NEW * mult)}...\r\n`);
         }
-        addText(' Please select an empty slot:\r\n');
-        this.menu = {
-          '[0] Cancel transaction ': 'upgrade',
+        addText(' Please select an empty slot below.\r\n');
+        refreshMenuPos();
+        this.vial_menu = {};
+        this.vial_menu.cancel = {
+          label: '[0] Cancel transaction ',
+          func: function () {
+            addText('\r\n\n');
+            gameState('upgrade');
+          },
         };
         function doUpgrade(slot) {
           if (cost_item) {
@@ -541,19 +547,23 @@ export function main() {
           game_state.eda[slot] = {
             max_level: 1,
           };
-          addText(ansi.green.bright(' New vial installed!\r\n'));
+          addText('\r\n\n');
+          addText(ansi.green.bright(' New vial installed!\r\n\n'));
           if (edaCount() === 1) {
             addText(ansi.black.bright('   HINT: Install one more before venturing forth.\r\n'));
           }
           upgrade_did_something = true;
           gameState('upgrade');
         }
-        for (let ii = 0; ii < game_state.eda.length; ++ii) {
-          let slot = game_state.eda[ii];
-          if (!slot) {
-            this.menu[`[${ii+1}] Unoccupied expansion slot `] = doUpgrade.bind(this, ii);
-          }
-        }
+        this.vial_menu.func = doUpgrade;
+        this.vial_menu.filter = (slot) => !slot;
+
+        // for (let ii = 0; ii < game_state.eda.length; ++ii) {
+        //   let slot = game_state.eda[ii];
+        //   if (!slot) {
+        //     this.menu[`[${ii+1}] Unoccupied expansion slot `] = doUpgrade.bind(this, ii);
+        //   }
+        // }
       },
     },
     upgradeL2: {
@@ -574,8 +584,14 @@ export function main() {
           addText(` Upgrading L1 \x10 L2 Vial for ${cost(COST_L2)}...\r\n`);
         }
         addText(' Please select a vial to upgrade:\r\n');
-        this.menu = {
-          '[0] Cancel transaction ': 'upgrade',
+        refreshMenuPos();
+        this.vial_menu = {};
+        this.vial_menu.cancel = {
+          label: '[0] Cancel transaction ',
+          func: function () {
+            addText('\r\n\n');
+            gameState('upgrade');
+          },
         };
         function doUpgrade(slot) {
           if (cost_item) {
@@ -584,17 +600,20 @@ export function main() {
             game_state.gp -= COST_L2;
           }
           game_state.eda[slot].max_level = 2;
+          addText('\r\n\n');
           addText(ansi.green.bright(` Vial ${slot+1} upgraded!\r\n\n`));
           upgrade_did_something = true;
           gameState('upgrade');
         }
-        for (let ii = 0; ii < game_state.eda.length; ++ii) {
-          let slot = game_state.eda[ii];
-          if (slot && slot.max_level === 1) {
-            let label = `[${ii+1}] L${slot.max_level} Vial: ${slot.color ? itemBright(slot) : 'Empty'}`;
-            this.menu[label] = doUpgrade.bind(this, ii);
-          }
-        }
+        this.vial_menu.func = doUpgrade;
+        this.vial_menu.filter = (slot) => slot && slot.max_level === 1;
+        // for (let ii = 0; ii < game_state.eda.length; ++ii) {
+        //   let slot = game_state.eda[ii];
+        //   if (slot && slot.max_level === 1) {
+        //     let label = `[${ii+1}] L${slot.max_level} Vial: ${slot.color ? itemBright(slot) : 'Empty'}`;
+        //     this.menu[label] = doUpgrade.bind(this, ii);
+        //   }
+        // }
       },
     },
     dead: {
@@ -903,7 +922,6 @@ export function main() {
           });
 
           this.vial_menu.cancel = {
-            x: 1, y,
             label: '[0] Back to town! ',
             func: function () {
               adjustMarketPrices();
@@ -966,7 +984,7 @@ export function main() {
   function refreshMenuPos() {
     terminal.subViewPush(body_subview);
     let st = STATES[game_state.state];
-    let key_count = Object.keys(st.menu).length;
+    let key_count = st.menu ? Object.keys(st.menu).length : 1;
     for (let ii = 0; ii < key_count - 1; ++ii) {
       terminal.print({ text: '\n' });
     }
@@ -1198,7 +1216,7 @@ export function main() {
         let selected = select_vial === ii;
         terminal.print({
           x: 0, y,
-          text: padRight(label, 26),
+          text: padRight(label, 30),
           fg: selected ? 15 : 0, bg: selected ? 1 : 8,
         });
         if (slot && slot.color) {
@@ -1256,10 +1274,16 @@ export function main() {
         menu_items.push(st.vial_menu.cancel.label);
         ret_map[0] = st.vial_menu.cancel.func;
       }
+      let filter = st.vial_menu.filter || ((slot) => slot);
       for (let ii = 0; ii < game_state.eda.length; ++ii) {
         let slot = game_state.eda[ii];
-        if (slot) {
-          let label = `L${slot.max_level} Vial: ${slot.color ? itemBright(slot) : 'Empty'} `;
+        if (filter(slot)) {
+          let label;
+          if (slot) {
+            label = `L${slot.max_level} Vial: ${slot.color ? itemBright(slot) : 'Empty'} `;
+          } else {
+            label = 'Unoccupied expansion slot';
+          }
           let y = DISTILL_Y + 1 + 2 * ii;
           let prefix = ansi.blue.bright(` ${ii === game_state.eda.length - 1 ? '└' : '├'}${ii+1}─ `);
           menu_items.push({
