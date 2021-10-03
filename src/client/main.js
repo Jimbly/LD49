@@ -226,7 +226,7 @@ export function main() {
         if (home_did_age) {
           home_did_age = false;
           addText(' During the long journey home, the uncrystalized essence\r\n' +
-            '   in your vials ages and becomes more volatile.\r\n\n');
+            '   in your vials ages and becomes more volatile.\r\n');
         }
         addText(' You stand in the town square, ready for adventure!  Or,\r\n' +
           randMessage([
@@ -584,6 +584,7 @@ export function main() {
           addText(` Upgrading L1 \x10 L2 Vial for ${cost(COST_L2)}...\r\n`);
         }
         addText(' Please select a vial to upgrade:\r\n');
+        this.menu = null;
         refreshMenuPos();
         this.vial_menu = {};
         this.vial_menu.cancel = {
@@ -686,8 +687,8 @@ export function main() {
               },
             };
             path.divine_danger = path.enemy.damage + (rand.random() - 0.5) * 20;
-            let num_drops = 1 + floor(rand.random() * rand.random() * 5);
-            let count_scale = num_drops === 1 ? 2 : num_drops === 2 ? 1.5 : 1;
+            let num_drops = engine.DEBUG ? 5 : 1 + floor(rand.random() * rand.random() * 5);
+            let count_scale = num_drops === 1 ? 1.5 : num_drops === 2 ? 1.25 : 1;
             path.divine_essence = [];
             for (let jj = 0; jj < num_drops; ++jj) {
               let drop = {
@@ -796,6 +797,7 @@ export function main() {
         let self = this;
         function showStatus() {
           terminal.subViewPush(body_subview);
+          terminal.normal();
           terminal.clear();
           let y = 0;
           terminal.print({
@@ -936,6 +938,7 @@ export function main() {
           });
         }
         this.vial_menu.func = selectVial;
+        this.menu = null;
         // for (let ii = 0; ii < game_state.eda.length; ++ii) {
         //   let slot = game_state.eda[ii];
         //   if (slot) {
@@ -944,6 +947,7 @@ export function main() {
         //   }
         // }
         terminal.subViewPop();
+        refreshMenuPos();
       },
     },
     home: {
