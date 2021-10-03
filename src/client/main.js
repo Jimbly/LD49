@@ -233,6 +233,17 @@ export function main() {
             ' whatever passes for adventure here',
           ]) +
           '.\r\n');
+        if (edaCount() < 2) {
+          addText(ansi.green('    HINT: Install 2 vials at the Refiner\'s Guild\r\n'));
+        } else if (!game_state.gp && !game_state.inventory.length) {
+          addText(ansi.green('    HINT: Venture Forth until you crystalize a gem\r\n'));
+        } else if (!game_state.gp && (!game_state.diviner || game_state.hp < 50) && game_state.inventory.length) {
+          addText(ansi.green('    HINT: Consider selling your gem at the market\r\n'));
+        } else if (!game_state.diviner && game_state.gp >= COST_DIVINER + COST_DIVINE_ESSENCE) {
+          addText(ansi.green('    HINT: Contract with a Diviner at their Guild\r\n'));
+        } else if (game_state.hp < 50 && game_state.gp) {
+          addText(ansi.green('    HINT: Visit the healer to heal.  Death ends all.\r\n'));
+        }
         this.menu = {
           '[1] Refiner\'s Guild ': 'upgrade',
           '[2] Market ': 'market',
@@ -323,8 +334,7 @@ export function main() {
       enter: function () {
         upgrade_did_something = true;
         if (edaCount() < 2) {
-          addText(ansi.red(' You must install at least 2 vials\r\n' +
-            ' before upgrading.\r\n\n'));
+          addText(ansi.red(' You must install at least 2 vials before upgrading.\r\n\n'));
           return void gameState('upgrade');
         }
         if (game_state.unlock_l2) {
@@ -598,7 +608,8 @@ export function main() {
         if (edaCount() < 2) {
           addText(ansi.red(' You must visit the Refiner\'s Guild and install at\r\n' +
             ' least 2 vials into your E.D.A. before continuing.\r\n\n'));
-          return void gameState('town');
+          this.menu = MENU_CONTINUE;
+          return;
         }
 
         addText(` Where do you search for ${game_state.ventures > 6 ? 'bears' : 'beasts'}?\r\n`);
@@ -966,7 +977,7 @@ export function main() {
       eda: [null, null, null, null, null],
     };
     adjustMarketPrices();
-    if (engine.DEBUG) {
+    if (engine.DEBUG && false) {
       game_state.gp = 50001;
       // game_state.hp = 90;
       game_state.diviner = 1;
@@ -1316,7 +1327,7 @@ export function main() {
   }
 
   function menuInit(dt) {
-    terminal.baud = engine.DEBUG && false ? 56600 : 9600;
+    terminal.baud = engine.DEBUG ? 56600 : 9600;
     terminal.color(7,0);
     terminal.clear();
     terminalSettingsInit(terminal);
