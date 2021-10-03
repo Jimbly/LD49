@@ -75,7 +75,7 @@ const COLORS_BRIGHT = {
 };
 
 let rand;
-let rand_seed = 'test';
+let rand_seed = 'test1';
 
 export function main() {
   if (engine.DEBUG) {
@@ -687,7 +687,7 @@ export function main() {
               },
             };
             path.divine_danger = path.enemy.damage + (rand.random() - 0.5) * 20;
-            let num_drops = engine.DEBUG ? 5 : 1 + floor(rand.random() * rand.random() * 5);
+            let num_drops = 1 + floor(rand.random() * rand.random() * 5);
             let count_scale = num_drops === 1 ? 1.5 : num_drops === 2 ? 1.25 : 1;
             path.divine_essence = [];
             for (let jj = 0; jj < num_drops; ++jj) {
@@ -926,6 +926,7 @@ export function main() {
           this.vial_menu.cancel = {
             label: '[0] Back to town! ',
             func: function () {
+              addText('\r\n\n');
               adjustMarketPrices();
               gameState('home');
             },
@@ -1029,7 +1030,7 @@ export function main() {
       eda: [null, null, null, null, null],
     };
     adjustMarketPrices();
-    if (engine.DEBUG) {
+    if (engine.DEBUG && false) {
       game_state.gp = 50001;
       // game_state.hp = 90;
       game_state.diviner = 1;
@@ -1234,7 +1235,7 @@ export function main() {
           } else {
             let percent = max(1, floor((1 - slot.volatile) * 100));
             let str = padRight(`VOLATILE! (${percent}%)`, VOLATILE_W);
-            if (percent > 50) {
+            if (percent > 10) {
               str = ansi.blink(str);
             }
             terminal.print({

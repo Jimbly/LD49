@@ -50,7 +50,8 @@ Resources:
   Blazinul - stable
   Mahite - unlock L2 essence
 
-Priority order:
+TODO:
+  Keep cursor position in inventory when selling
   Change more (all after any menu?) things to be new/fresh screens, e.g. intro text from refiner's guild should show text, and have a "continue" stop.
   Save state to local storage
   Alliterize everything
