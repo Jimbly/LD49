@@ -192,6 +192,9 @@ export function main() {
   let home_did_age = false;
   let upgrade_did_something = false;
   let inventory_draw_once = false;
+  let eda_draw_once = false;
+  let select_vial = null;
+  let distill_last_message = null;
   function adjustMarketPrices() {
     game_state.market_prices = [];
     for (let ii = 0; ii < 6; ++ii) {
@@ -747,6 +750,7 @@ export function main() {
         '[0] Continue ': 'choice2',
       },
       enter: function () {
+        distill_last_message = null;
         addText(` You explore the ${game_state.location.name} and encounter a...\r\n`);
         addText('   ' + ansi.red.bright(game_state.enemy.name) + '!\r\n');
         let damage = game_state.enemy.damage;
@@ -764,6 +768,8 @@ export function main() {
     },
     choice2: {
       enter: function () {
+        select_vial = null;
+        eda_draw_once = true;
         home_idx = 0;
         home_did_age = false;
         game_state.divined = {};
@@ -808,18 +814,24 @@ export function main() {
           });
           y++;
 
+          select_vial = slot_idx;
+
+          self.vial_menu = false;
           self.menu = {
             '[0] Cancel ': 'choice2',
           };
           let midx = 1;
           if (slot.color) {
             self.menu[`[${midx++}] Drain Vial `] = function () {
+              select_vial = null;
               // TODO: animation
               slot.color = null;
+              eda_draw_once = true;
               gameState('choice2');
             };
           }
           function fillVial(drop_idx) {
+            select_vial = null;
             let drop = drops[drop_idx];
             if (!slot.color) {
               slot.color = drop.color;
@@ -832,6 +844,7 @@ export function main() {
             if (drop.count + slot.count >= 100) {
               // TODO: sound?
               // TODO: display a message when it refreshes the screen?
+              distill_last_message = `Vial filled, crystalized 1 ${itemBright(slot)}!`;
               inventoryAdd({
                 color: slot.color,
                 level: slot.level,
@@ -846,6 +859,7 @@ export function main() {
               slot.count += drop.count;
               drops.splice(drop_idx, 1);
             }
+            eda_draw_once = true;
             gameState('choice2');
           }
           for (let ii = 0; ii < drops.length; ++ii) {
@@ -867,7 +881,18 @@ export function main() {
           refreshMenuPos();
         }
         let y = showStatus();
-        this.menu = {};
+        if (distill_last_message) {
+          y++;
+          terminal.print({
+            x: 1, y,
+            fg: 10, bg: 0,
+            text: distill_last_message + '\r\n'
+          });
+          y++;
+          y++;
+          distill_last_message = null;
+        }
+        this.vial_menu = {};
         if (!drops.length) {
           terminal.print({
             x: 1, y,
@@ -877,24 +902,29 @@ export function main() {
               ' desired.\r\n',
           });
 
-          this.menu['[0] Back to town! '] = function () {
-            adjustMarketPrices();
-            gameState('home');
+          this.vial_menu.cancel = {
+            x: 1, y,
+            label: '[0] Back to town! ',
+            func: function () {
+              adjustMarketPrices();
+              gameState('home');
+            },
           };
         } else {
           terminal.print({
             x: 1, y,
             fg: 7, bg: 0,
-            text: 'Select a vial to drain or fill:\r\n'
+            text: 'Select a vial to drain or fill.\r\n'
           });
         }
-        for (let ii = 0; ii < game_state.eda.length; ++ii) {
-          let slot = game_state.eda[ii];
-          if (slot) {
-            let label = `[${ii+1}] L${slot.max_level} Vial: ${slot.color ? itemBright(slot) : 'Empty'} `;
-            this.menu[label] = selectVial.bind(this, ii);
-          }
-        }
+        this.vial_menu.func = selectVial;
+        // for (let ii = 0; ii < game_state.eda.length; ++ii) {
+        //   let slot = game_state.eda[ii];
+        //   if (slot) {
+        //     let label = `[${ii+1}] L${slot.max_level} Vial: ${slot.color ? itemBright(slot) : 'Empty'} `;
+        //     this.menu[label] = selectVial.bind(this, ii);
+        //   }
+        // }
         terminal.subViewPop();
       },
     },
@@ -977,7 +1007,7 @@ export function main() {
       eda: [null, null, null, null, null],
     };
     adjustMarketPrices();
-    if (engine.DEBUG && false) {
+    if (engine.DEBUG) {
       game_state.gp = 50001;
       // game_state.hp = 90;
       game_state.diviner = 1;
@@ -990,10 +1020,10 @@ export function main() {
       game_state.eda[1] = {
         max_level: 1,
         // max_level: 2,
-        // color: 'blue',
-        // level: 2,
-        // count: 47,
-        // volatile: 0,
+        color: 'blue',
+        level: 1,
+        count: 90,
+        volatile: 3,
       };
     }
     terminal.autoScroll(false);
@@ -1155,19 +1185,21 @@ export function main() {
 
     const VOLATILE_X = 42;
     const VOLATILE_W = 16;
-    function drawDistillery() {
+    function drawEDA() {
+      eda_draw_once = false;
       for (let ii = 0; ii < game_state.eda.length; ++ii) {
         let slot = game_state.eda[ii];
         let prefix = ansi.blue.bright(` ${ii === game_state.eda.length - 1 ? '└' : '├'}${ii+1}─ `);
         let y = DISTILL_Y + 1 + 2 * ii;
+        let label = prefix +
+          (!slot ?
+            ansi.white('Unoccupied expansion slot') :
+            `L${slot.max_level} Vial: ${slot.color ? itemBright(slot) : 'Empty'}`);
+        let selected = select_vial === ii;
         terminal.print({
           x: 0, y,
-          text: padRight(prefix +
-            (!slot ?
-              ansi.white('Unoccupied expansion slot') :
-              `L${slot.max_level} Vial: ${slot.color ? itemBright(slot) : 'Empty'}`),
-          VOLATILE_X),
-          fg: 0, bg: 8,
+          text: padRight(label, 26),
+          fg: selected ? 15 : 0, bg: selected ? 1 : 8,
         });
         if (slot && slot.color) {
           if (slot.volatile >= 1) {
@@ -1212,10 +1244,53 @@ export function main() {
     }
 
     drawStatus();
-    drawDistillery();
-
     let st = STATES[game_state.state];
-    if (st && st.menu) {
+    if (!st || !st.vial_menu || eda_draw_once) {
+      drawEDA();
+    }
+
+    if (st && st.vial_menu) {
+      let menu_items = [];
+      let ret_map = [];
+      if (st.vial_menu.cancel) {
+        menu_items.push(st.vial_menu.cancel.label);
+        ret_map[0] = st.vial_menu.cancel.func;
+      }
+      for (let ii = 0; ii < game_state.eda.length; ++ii) {
+        let slot = game_state.eda[ii];
+        if (slot) {
+          let label = `L${slot.max_level} Vial: ${slot.color ? itemBright(slot) : 'Empty'} `;
+          let y = DISTILL_Y + 1 + 2 * ii;
+          let prefix = ansi.blue.bright(` ${ii === game_state.eda.length - 1 ? '└' : '├'}${ii+1}─ `);
+          menu_items.push({
+            x: 0,
+            y,
+            label,
+            color_sel: { fg: 15, bg: 1 },
+            color_unsel: { fg: 0, bg: 8 },
+            color_execute: { fg: 14, bg: 8 },
+            pre_sel: prefix,
+            pre_unsel: prefix,
+            hotkey: String(ii+1),
+          });
+          ret_map.push(st.vial_menu.func.bind(null, ii));
+        }
+      }
+      let ret = terminal.menu({
+        pre_sel: ' ■ ',
+        pre_unsel: '   ',
+        x: game_state.menu_x,
+        y: game_state.menu_y,
+        items: menu_items,
+        color_sel: { fg: 15, bg: 1 },
+        color_unsel: { fg: 9, bg: 0 },
+        color_execute: { fg: 15, bg: 0 },
+      });
+      if (ret !== -1) {
+        ret_map[ret]();
+      }
+
+    } else if (st && st.menu) {
       st.menu_keys = Object.keys(st.menu);
       let ret = terminal.menu({
         pre_sel: ' ■ ',
