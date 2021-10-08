@@ -9,6 +9,7 @@ const fs = require('fs');
 const { ceil, floor, max, min, pow, random } = Math;
 const net = require('glov/client/net.js');
 const { mashString, randCreate } = require('glov/common/rand_alea.js');
+const score_system = require('glov/client/score.js');
 const { ansi, padLeft, padRight, terminalCreate } = require('glov/client/terminal.js');
 const { terminalSettingsInit, terminalSettingsShow } = require('glov/client/terminal_settings.js');
 const ui = require('glov/client/ui.js');
@@ -195,6 +196,12 @@ export function main() {
   let eda_draw_once = false;
   let select_vial = null;
   let distill_last_message = null;
+  function updateHighScores() {
+    score_system.setScore(0,
+      { gp: game_state.earned_gp, ventures: game_state.ventures }
+    );
+
+  }
   function adjustMarketPrices() {
     game_state.market_prices = [];
     for (let ii = 0; ii < 6; ++ii) {
@@ -409,6 +416,8 @@ export function main() {
         inventoryRemove(item);
         let income = game_state.market_prices[COLOR_LIST.indexOf(item.color)] * pow(SELL_L2_MULT, item.level - 1);
         game_state.gp += income;
+        game_state.earned_gp += income;
+        updateHighScores();
         addText(` You sell 1 ${itemBright(item)} for ${cost(income)}.\r\n`);
         inventory_draw_once = true;
       },
@@ -643,6 +652,7 @@ export function main() {
           game_state.enemy = game_state.location.enemy;
           game_state.paths = null;
           game_state.ventures++;
+          updateHighScores();
           gameState('fight');
         }
 
@@ -1027,11 +1037,12 @@ export function main() {
       hp: 100,
       maxhp: 100,
       gp: START_GP,
+      earned_gp: START_GP,
       inventory: [],
       eda: [null, null, null, null, null],
     };
     adjustMarketPrices();
-    if (engine.DEBUG) {
+    if (engine.DEBUG && true) {
       game_state.gp = 50001;
       // game_state.hp = 90;
       game_state.diviner = 1;
@@ -1454,6 +1465,28 @@ export function main() {
     engine.setState(menu);
     menu(dt);
   }
+
+  function encodeScore(score) {
+    assert(score.gp >= 0 && score.ventures >= 0);
+    return score.gp * 10000 +
+      score.ventures;
+  }
+
+  function parseScore(value) {
+    let gp = floor(value / 10000);
+    value -= gp * 10000;
+    let ventures = value;
+    return { gp, ventures };
+  }
+
+  let levels = [
+    {
+      name: 'main',
+      display_name: 'Main',
+    },
+  ];
+  score_system.init(encodeScore, parseScore, levels, 'LD49');
+  score_system.updateHighScores();
 
   engine.setState(menuInit);
 }
