@@ -412,6 +412,7 @@ export function main() {
         addText(` You sell 1 ${itemBright(item)} for ${cost(income)}.\r\n`);
         inventory_draw_once = true;
       },
+      menu_key: 'sell',
       enter: function () {
         if (!game_state.inventory.length) {
           addText(' She looks you up and down, saying ' + talk('"You seem to have\r\n' +
@@ -1030,13 +1031,13 @@ export function main() {
       eda: [null, null, null, null, null],
     };
     adjustMarketPrices();
-    if (engine.DEBUG && false) {
+    if (engine.DEBUG) {
       game_state.gp = 50001;
       // game_state.hp = 90;
       game_state.diviner = 1;
       game_state.inventory.push({ count: 2, level: 1, color: 'magenta' },
-        { count: 1, level: 1, color: 'blue' },
-        { count: 1, level: 2, color: 'blue' });
+        { count: 2, level: 1, color: 'blue' },
+        { count: 2, level: 2, color: 'blue' });
       game_state.eda[0] = {
         max_level: 1,
       };
@@ -1364,6 +1365,7 @@ export function main() {
         color_sel: { fg: 15, bg: 1 },
         color_unsel: { fg: 7, bg: 0 },
         color_execute: { fg: 15, bg: 0 },
+        key: st.menu_key,
       });
       if (ret !== -1) {
         st.inventory_menu(ret);
