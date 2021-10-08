@@ -1,6 +1,6 @@
 /*eslint global-require:off, no-use-before-define:["error", { "functions": false }], prefer-template:off*/
 const local_storage = require('glov/client/local_storage.js');
-local_storage.setStoragePrefix('glovjs-playground'); // Before requiring anything else that might load from this
+local_storage.setStoragePrefix('LD49'); // Before requiring anything else that might load from this
 
 const assert = require('assert');
 const engine = require('glov/client/engine.js');
@@ -196,11 +196,13 @@ export function main() {
   let eda_draw_once = false;
   let select_vial = null;
   let distill_last_message = null;
+  function saveGame() {
+    local_storage.setJSON('game_state', game_state);
+  }
   function updateHighScores() {
     score_system.setScore(0,
       { gp: game_state.earned_gp, ventures: game_state.ventures }
     );
-
   }
   function adjustMarketPrices() {
     game_state.market_prices = [];
@@ -1012,9 +1014,13 @@ export function main() {
     game_state.menu_x = body_subview.x;
     game_state.menu_y = body_subview.cursor_y - key_count + 1;
   }
-  function gameState(state) {
+  function gameState(state, no_save) {
     let st = STATES[state];
     game_state.state = state;
+
+    if (!no_save && state === 'town') {
+      saveGame();
+    }
 
     terminal.normal();
     st.enter();
@@ -1115,7 +1121,7 @@ export function main() {
 
     terminal.autoScroll(true);
     terminal.color(7,0);
-    gameState('town');
+    gameState('town', true);
     engine.setState(game);
   }
 
@@ -1417,27 +1423,42 @@ export function main() {
   const MENU_X = (80 - MENU_W) / 2;
   const MENU_Y = 20;
   function menu(dt) {
+    let items = [
+      'New Game ',
+      'Continue Game ',
+      `${ansi.yellow.bright('[O]')}ptions `,
+    ];
+    if (engine.defines.COMPO) {
+      items.splice(1, 1);
+    }
     let sel = terminal.menu({
       x: MENU_X,
       y: MENU_Y,
-      items: [
-        'New Game ',
-        // 'Continue Game ', TODO?
-        `${ansi.yellow.bright('[O]')}ptions `,
-      ],
+      items,
     });
 
-    if (engine.DEBUG) {
+    if (engine.DEBUG && false) {
       gameInit();
     }
 
-    switch (sel) { // eslint-disable-line default-case
-      case 0:
-        introInit();
-        break;
-      case 1:
-        terminalSettingsShow();
-        break;
+    if (sel === 0) {
+      introInit();
+    } else if (engine.defines.COMPO && sel === 1 || sel === 2) {
+      terminalSettingsShow();
+    } else if (sel === 1) {
+      game_state = local_storage.getJSON('game_state');
+      if (game_state) {
+        gameInit();
+        gameInit(); // use unique seed
+        game_state = local_storage.getJSON('game_state');
+        gameState('town');
+      } else {
+        terminal.print({
+          x: 16, y: 24,
+          fg: 4, bg: 0,
+          text: '         !!! No saved game found !!!        ',
+        });
+      }
     }
 
     terminal.render();
