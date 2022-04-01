@@ -3,7 +3,7 @@ LD49 - Unstable
 
 Ludum Dare 49 Entry by Jimbly - "Blood of Beasts"
 
-* Play here: [http://www.dashingstrike.com/LudumDare/LD48/](dashingstrike.com/LudumDare/LD49/)
+* Play here: [http://www.dashingstrike.com/LudumDare/LD49/](dashingstrike.com/LudumDare/LD49/)
 * Using [Javascript libGlov/GLOV.js framework](https://github.com/Jimbly/glovjs)
 
 Start with: `npm start` (after running `npm i` once)
